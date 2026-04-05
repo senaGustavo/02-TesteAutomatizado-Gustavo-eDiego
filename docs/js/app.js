@@ -2,9 +2,6 @@
 // QS Acadêmico — Sistema de Gestão de Notas
 // ============================================
 // Este sistema foi desenvolvido para fins didáticos.
-// Ele contém pelo menos um defeito intencional de
-// implementação que deve ser descoberto por meio
-// de testes automatizados.
 // ============================================
 
 let alunos = [];
@@ -42,7 +39,9 @@ function normalizarClasse(texto) {
  * @returns {number} Média aritmética das notas
  */
 function calcularMedia(nota1, nota2, nota3) {
-const media = (nota1 + nota2 + nota3) / 3;}
+    const media = (nota1 + nota2 + nota3) / 3;
+    return media; // <-- CORREÇÃO: Agora a função retorna o valor calculado!
+}
 
 /**
  * Determina a situação do aluno com base na média.
@@ -67,9 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const campoBusca = document.getElementById('busca');
     const btnLimpar = document.getElementById('btn-limpar');
 
-    form.addEventListener('submit', cadastrarAluno);
-    campoBusca.addEventListener('input', (e) => atualizarTabela(e.target.value));
-    btnLimpar.addEventListener('click', limparTudo);
+    if (form) form.addEventListener('submit', cadastrarAluno);
+    if (campoBusca) campoBusca.addEventListener('input', (e) => atualizarTabela(e.target.value));
+    if (btnLimpar) btnLimpar.addEventListener('click', limparTudo);
 
     atualizarTabela();
     atualizarEstatisticas();
@@ -127,6 +126,8 @@ function cadastrarAluno(event) {
  */
 function atualizarTabela(filtro = '') {
     const tbody = document.querySelector('#tabela-alunos tbody');
+    if (!tbody) return;
+    
     tbody.innerHTML = '';
 
     const alunosFiltrados = filtro
@@ -143,12 +144,16 @@ function atualizarTabela(filtro = '') {
     alunosFiltrados.forEach(aluno => {
         const tr = document.createElement('tr');
         tr.setAttribute('data-testid', `aluno-${aluno.id}`);
+        
+        // Garantindo que media seja um número para o toFixed não falhar
+        const mediaExibicao = typeof aluno.media === 'number' ? aluno.media.toFixed(2) : '0.00';
+
         tr.innerHTML = `
             <td>${escapeHtml(aluno.nome)}</td>
             <td>${aluno.nota1.toFixed(1)}</td>
             <td>${aluno.nota2.toFixed(1)}</td>
             <td>${aluno.nota3.toFixed(1)}</td>
-            <td>${aluno.media.toFixed(2)}</td>
+            <td>${mediaExibicao}</td>
             <td><span class="badge badge-${normalizarClasse(aluno.situacao)}">${aluno.situacao}</span></td>
             <td><button class="btn-excluir" onclick="excluirAluno(${aluno.id})" aria-label="Excluir ${escapeHtml(aluno.nome)}">&#10005;</button></td>
         `;
@@ -165,10 +170,15 @@ function atualizarEstatisticas() {
     const recuperacao = alunos.filter(a => a.situacao === 'Recuperação').length;
     const reprovados = alunos.filter(a => a.situacao === 'Reprovado').length;
 
-    document.getElementById('stat-total').textContent = total;
-    document.getElementById('stat-aprovados').textContent = aprovados;
-    document.getElementById('stat-recuperacao').textContent = recuperacao;
-    document.getElementById('stat-reprovados').textContent = reprovados;
+    const elTotal = document.getElementById('stat-total');
+    const elAprovados = document.getElementById('stat-aprovados');
+    const elRecuperacao = document.getElementById('stat-recuperacao');
+    const elReprovados = document.getElementById('stat-reprovados');
+
+    if (elTotal) elTotal.textContent = total;
+    if (elAprovados) elAprovados.textContent = aprovados;
+    if (elRecuperacao) elRecuperacao.textContent = recuperacao;
+    if (elReprovados) elReprovados.textContent = reprovados;
 }
 
 /**
@@ -176,7 +186,8 @@ function atualizarEstatisticas() {
  */
 function excluirAluno(id) {
     alunos = alunos.filter(a => a.id !== id);
-    atualizarTabela(document.getElementById('busca').value);
+    const campoBusca = document.getElementById('busca');
+    atualizarTabela(campoBusca ? campoBusca.value : '');
     atualizarEstatisticas();
     exibirMensagem('Aluno removido com sucesso.', 'sucesso');
 }
@@ -200,8 +211,10 @@ function limparTudo() {
  * Limpa os campos do formulário.
  */
 function limparFormulario() {
-    document.getElementById('form-cadastro').reset();
-    document.getElementById('nome').focus();
+    const form = document.getElementById('form-cadastro');
+    if (form) form.reset();
+    const campoNome = document.getElementById('nome');
+    if (campoNome) campoNome.focus();
 }
 
 /**
@@ -209,6 +222,8 @@ function limparFormulario() {
  */
 function exibirMensagem(texto, tipo) {
     const div = document.getElementById('mensagem');
+    if (!div) return;
+
     div.textContent = texto;
     div.className = `mensagem ${tipo}`;
     div.hidden = false;
